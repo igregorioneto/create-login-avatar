@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { BaseEntity, Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { AfterInsert, AfterLoad, BaseEntity, Column, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 @Entity()
-export class Profile {
+export class File {
     @PrimaryGeneratedColumn({
         type: 'int',
         name: 'id'
@@ -21,21 +21,23 @@ export class Profile {
     })
     uuid?: Buffer | string;
 
-    @Column({ name: 'name', type: 'varchar', length: 50 })
+    @Column('varchar', { name: 'name', length: 255 })
+    @ApiProperty({ required: true, type: 'string' })
     name: string;
 
-    @Column({ name: 'avatar_id', unique: true })
-    @ApiProperty({ required: false, type: 'number' })
-    avatarId: string;
+    @Column('varchar', { name: 'type', length: 255 })
+    @ApiProperty({ required: true, type: 'string' })
+    type: string;
 
-    @Column({ name: 'email', type: 'varchar', length: 255 })
-    email: string;
+    @Column('float', { name: 'size_bytes', nullable: true, precision: 12 })
+    @ApiProperty({ required: true, type: 'float' })
+    sizeBytes: number;
 
-    @Column({ name: 'password', type: 'varchar', length: 255 })
-    password: string;
+    @ApiProperty({ required: false, type: 'string' })
+    url: string;
 
-    @Column({ name: 'birth_date', type: 'datetime' })
-    birthDate: Date;
+    @ApiProperty({ required: false, type: 'base64 string' })
+    file: string | undefined;
 
     @Column({
         name: 'created',
@@ -53,12 +55,13 @@ export class Profile {
     @ApiProperty({ required: true, type: 'timestamp' })
     updated?: Date;
 
-
-    @OneToOne(() => File, {
-        cascade: ['insert', 'update']
-    })
-    @JoinColumn([{ name: 'avatar_id', referencedColumnName: 'id' }])
-    @ApiProperty({ required: false, type: 'File' })
-    avatar?: File;
-
+    @AfterLoad()
+    @AfterInsert()
+    setUrl(): void {
+        this.url = [
+            'http://localhost:3000',
+            this.uuid.toString(),
+            this.name,
+        ].join('/');
+    }
 }
