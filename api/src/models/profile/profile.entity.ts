@@ -1,5 +1,8 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { BaseEntity, Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+
+import * as bcrypt from 'bcrypt';
+
 @Entity()
 export class Profile {
     @PrimaryGeneratedColumn({
@@ -60,5 +63,14 @@ export class Profile {
     @JoinColumn([{ name: 'avatar_id', referencedColumnName: 'id' }])
     @ApiProperty({ required: false, type: 'File' })
     avatar?: File;
+
+    async hashPassword() {
+        if (this.password !== null)
+            this.password = await bcrypt.hash(this.password, 8);
+    }
+
+    async validatePassword(password: string): Promise<boolean> {
+        return await bcrypt.compare(password, this.password);
+    }
 
 }
